@@ -2,6 +2,7 @@
 
 import * as z from "zod";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -24,9 +25,17 @@ import { FormSuccess } from "../form-success";
 import { login } from "@/actions/login";
 
 export const LoginForm = () => {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
+  const [urlError, setUrlError] = useState<string | undefined>(
+    searchParams.get("error") === "OAuthAccountNotLinked"
+      ? "Email already in use with different provider!"
+      : ""
+  );
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     defaultValues: {
@@ -49,10 +58,11 @@ export const LoginForm = () => {
     const timer = setTimeout(() => {
       setError("");
       setSuccess("");
-    }, 2000);
+      setUrlError("");
+    }, 4000);
 
     return () => clearTimeout(timer);
-  }, [error, success]);
+  }, [error, success, urlError]);
 
   return (
     <CardWrapper
@@ -102,7 +112,7 @@ export const LoginForm = () => {
               )}
             />
           </div>
-          <FormError message={error} />
+          <FormError message={error || urlError} />
           <FormSuccess message={success} />
           <Button type="submit" className="w-full" disabled={isPending}>
             Login
