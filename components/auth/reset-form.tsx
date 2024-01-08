@@ -1,9 +1,7 @@
 "use client";
 
 import * as z from "zod";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,36 +17,27 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { CardWrapper } from "./card-wrapper";
-import { LoginSchema } from "@/schemas";
+import { ResetSchema } from "@/schemas";
 import { Button } from "../ui/button";
 import { FormError } from "../form-error";
 import { FormSuccess } from "../form-success";
-import { login } from "@/actions/login";
+import { reset } from "@/actions/reset";
 
-export const LoginForm = () => {
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
-
+export const ResetForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
-  const [urlError, setUrlError] = useState<string | undefined>(
-    searchParams.get("error") === "OAuthAccountNotLinked"
-      ? "Email already in use with different provider!"
-      : ""
-  );
 
-  const form = useForm<z.infer<typeof LoginSchema>>({
+  const form = useForm<z.infer<typeof ResetSchema>>({
     defaultValues: {
       email: "",
-      password: "",
     },
-    resolver: zodResolver(LoginSchema),
+    resolver: zodResolver(ResetSchema),
   });
 
-  const onSubmit = (values: z.infer<typeof LoginSchema>) => {
+  const onSubmit = (values: z.infer<typeof ResetSchema>) => {
     startTransition(() => {
-      login(values).then((data) => {
+      reset(values).then((data) => {
         setError(data?.error);
         setSuccess(data?.success);
       });
@@ -59,18 +48,16 @@ export const LoginForm = () => {
     const timer = setTimeout(() => {
       setError("");
       setSuccess("");
-      setUrlError("");
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [error, success, urlError]);
+  }, [error, success]);
 
   return (
     <CardWrapper
-      headerLabel="Welcome back"
-      backButtonLabel="Don't have an account?"
-      backButtonHref="/auth/register"
-      showSocial
+      headerLabel="Forgot your password?"
+      backButtonLabel="Back to login"
+      backButtonHref="/auth/login"
     >
       <Form {...form}>
         <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -93,38 +80,11 @@ export const LoginForm = () => {
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="********"
-                      type="password"
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <Button
-                    size="sm"
-                    variant="link"
-                    className="px-0 font-normal"
-                    asChild
-                  >
-                    <Link href="/auth/reset">Forgot password?</Link>
-                  </Button>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
-          <FormError message={error || urlError} />
+          <FormError message={error} />
           <FormSuccess message={success} />
           <Button type="submit" className="w-full" disabled={isPending}>
-            Login
+            Send reset email
           </Button>
         </form>
       </Form>
